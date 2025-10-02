@@ -1,0 +1,66 @@
+#!/bin/bash
+
+#
+# Copyright (c) 2020-2025 IAR Systems AB
+#
+# `bx-update-symlink` - Update the default symlink for the IAR Build Tools
+#
+# See LICENSE for detailed license information
+#
+
+SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
+SCRIPT_NAME=${BASH_SOURCE[0]#./}
+SCRIPT_VERSION=2025.10
+
+function __show_help() {
+  echo " "
+  echo "     IAR Symlink Updater Utility V${SCRIPT_VERSION}"
+  echo "     Copyright 2020-2025 IAR Systems AB."
+  echo " "
+  echo " Updates the default symlink to the IAR Build Tools."
+  echo " "
+  echo " Usage:"
+  echo " # ${SCRIPT_NAME} {bx|cx}<target>-<version>"
+  echo " "
+  echo " Examples:"
+  echo " # ${SCRIPT_NAME} bxarm-9.50.1"
+  echo " # ${SCRIPT_NAME} cxriscv-3.40.1"
+  echo " "
+}
+
+if [[ $# -eq 0 ]]; then
+  echo "Use \`${SCRIPT_NAME} -h\` for help."
+  exit 1
+fi
+
+while [ $# -gt 0 ]; do
+  case "${1}" in
+    -h|--help)
+      __show_help;
+      exit 0
+      ;;
+    bx*)
+      TARGET=/opt/iarsystems/${1}
+      ;;
+    cx*)
+      TARGET=/opt/iar/${1}
+      ;;
+    *)
+      echo "Unrecognized parameter."
+      ;;
+  esac
+  shift $(( $# > 0 ? 1 : 0 ))
+done
+
+if [[ $(/usr/bin/id -u) -ne 0 ]]; then
+  echo "Not running as root (#). Use \`${SCRIPT_NAME} -h\` for help."
+  exit 1
+fi
+
+if [[ -d ${TARGET} ]]; then
+  cd ${TARGET}/..
+  ln -snf $(basename ${TARGET}) $(basename ${TARGET%%-*})
+else
+  echo "Installation subdirectory was not found (${TARGET})."
+  exit 1
+fi 
